@@ -7,15 +7,21 @@ Also assumes that you can't predict which consul agent thinks its the leader, so
 
 **etcd** argument will 
 * find all etcd_server jobs and etcd processes in a bosh deployment 
-* monit stop etcd, rm -rf /var/vcap/store/etcd , and restart etcd.
+* monit stop etcd 
+* rm -rf /var/vcap/store/etcd 
+* restart all etcd servers.
 
 **consul** argument will 
 * find all consul_agent processes in a bosh deployment (across ALL jobs)
-* monit stop consul_agent, rm -rf /var/vcap/store/consul_agent , and restart consul_agent.
+* monit stop consul_agent 
+* rm -rf /var/vcap/store/consul_agent 
+* restart all consul_agent processes
 
 **bbs** argument will
-* find all diego_database jobs etcd processes in a bosh deployment
-* monit stop etcd, rm -rf /var/vcap/store/consul_agent , and restart consul_agent.
+* find all diego_database consul_agent processes in a bosh deployment
+* monit stop consul_agent
+* rm -rf /var/vcap/store/consul_agent
+* restart all consul_agent processes
 
 **ripley** argument will nuke the site from orbit (aka. all of the above).
 

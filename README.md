@@ -18,10 +18,10 @@ Also assumes that you can't predict which consul agent thinks its the leader, so
 * restart all consul_agent processes
 
 **bbs** argument will
-* find all diego_database consul_agent processes in a bosh deployment
-* monit stop consul_agent
-* rm -rf /var/vcap/store/consul_agent
-* restart all consul_agent processes
+* find all diego_database etcd processes in a bosh deployment
+* monit stop etcd
+* rm -rf /var/vcap/store/etcd
+* restart all etcd processes
 
 **ripley** argument will nuke the site from orbit (aka. all of the above).
 

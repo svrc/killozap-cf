@@ -7,7 +7,7 @@ if [[ ($1 == "consul-all") || ($1 == "consul-restart") || ($1 == "etcd" ) || ($1
         then
                 echo "Kill-o-Zapping your current CF deployment... "
         else
-                echo "Usage: $0 [consul ([all|)|bbs|etcd|ripley]"
+                echo "Usage: $0 [consul-all | consul-restart | bbs | etcd | cells | ripley]"
 		echo ""
                 echo "consul-all will stop all consul_agent processes globally, delete /var/vcap/store/consul_agent/* recursively, and restart them"
                 echo "consul-restart will restart all consul_agent processes globally"

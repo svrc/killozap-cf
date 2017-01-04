@@ -3,18 +3,39 @@
 # Presumes PCF job name patterns
 # Useful for quorum loss
 
-if [[ ($1 == "consul") || ($1 == "etcd" ) || ($1 == "bbs" ) || ($1 == "ripley") || ($1 == "cells") ]]
+if [[ ($1 == "consul-all") || ($1 == "consul-restart") || ($1 == "etcd" ) || ($1 == "bbs" ) || ($1 == "ripley") || ($1 == "cells") ]]
         then
                 echo "Kill-o-Zapping your current CF deployment... "
         else
                 echo "Usage: $0 [consul ([all|)|bbs|etcd|ripley]"
-                echo "consul will stop all consul agent instances, delete /var/vcap/store/consul_agent/* recursively, and restart them"
+		echo ""
+                echo "consul-all will stop all consul_agent processes globally, delete /var/vcap/store/consul_agent/* recursively, and restart them"
+                echo "consul-restart will restart all consul_agent processes globally"
                 echo "bbs will stop all diego bbs etcd processes, delete /var/vcap/store/etcd/* recursively, and restart them"
                 echo "etcd will stop all non-diego-bbs etcd job processes, delete /var/vcap/store/etcd/* recursively, and restart them"
                 echo "cells will stop all diego_cell consul_agent job processes, delete /var/vcap/store/consul_agent/* recursively, and restart them"
-                echo "ripley will nuke the site from orbit; aka all of the above"
+                echo "ripley will nuke the site from orbit; aka stop, delete, restart all etcd and consul_agent processes
                 exit 1
 fi
+
+
+restartProcesses() {
+  for x in $jobVMs; do
+     jobId=$(echo $x | awk -F "/" '{ print $1 }')
+     instanceId=$(echo $x | awk -F "/" '{ print $2 }'| awk -F '(' '{ print $1 }')
+     if [ -z $instanceId ]; then
+       continue
+     fi
+     processId=$(echo $x | awk -F "," '{ print $2 }')
+     if [ -z $processId ]; then
+       continue
+     fi
+     if [ $processId = $1 ]; then
+       echo Restarting: $jobId Instance: $instanceId Process $processId
+       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit restart $processId"
+     fi
+  done
+}
 
 nukeProcesses() {
   for x in $jobVMs; do
@@ -67,9 +88,14 @@ nukeProcesses() {
 
 
 
-if [ $1 == "consul" ]; then
+if [ $1 == "consul-all" ]; then
  jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
  nukeProcesses consul_agent
+fi
+
+if [ $1 == "consul-restart" ]; then
+ jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
+ restartProcesses consul_agent
 fi
 
 if [ $1 == "etcd" ]; then

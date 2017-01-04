@@ -1,21 +1,34 @@
 Destroys (with extreme prejudice) consul or etcd cluster persistent state for a given cf deployment for when those clusters have lost quorum.   
 
-Assumes the PCF convention where etcd server jobs have the pattern "etcd_server" and diego BBS have "diego_database" job patterns.
-Also assumes that you can't predict which consul agent thinks its the leader, so it's best to nuke them all.
+Assumes the PCF convention where 
+* etcd server jobs have the pattern "etcd_server" 
+* diego BBS have "diego_database" patterns, 
+* and cells have "diego_cell" job patterns.
 
-**Usage:  killozap.sh [etcd|bbs|consul|ripley]**
+Also assumes that you can't predict which consul agent thinks its the leader, so it's best to nuke or restart them all.
+
+**Usage:  killozap.sh [etcd|bbs|consul-all|consul-restart|cells|ripley]**
 
 **etcd** argument will 
-* find all etcd_server jobs and etcd processes in a bosh deployment 
+* find all etcd_server jobs' etcd processes in a bosh deployment 
 * monit stop etcd 
 * rm -rf /var/vcap/store/etcd 
 * restart all etcd servers.
 
-**consul** argument will 
+**consul-all** argument will 
 * find all consul_agent processes in a bosh deployment (across ALL jobs)
 * monit stop consul_agent 
 * rm -rf /var/vcap/store/consul_agent 
 * restart all consul_agent processes
+
+**consul-restart** argument will 
+* restart all consul_agent processes (across all jobs)
+
+**cells** argument will
+* find all diego_cell jobs' consul_agent processes in a bosh deployment
+* monit stop consul_agent
+* rm -rf /var/vcap/store/consul_agent
+* restart all consul_agent servers.
 
 **bbs** argument will
 * find all diego_database etcd processes in a bosh deployment

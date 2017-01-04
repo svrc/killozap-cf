@@ -14,7 +14,7 @@ if [[ ($1 == "consul-all") || ($1 == "consul-restart") || ($1 == "etcd" ) || ($1
                 echo "bbs will stop all diego bbs etcd processes, delete /var/vcap/store/etcd/* recursively, and restart them"
                 echo "etcd will stop all non-diego-bbs etcd job processes, delete /var/vcap/store/etcd/* recursively, and restart them"
                 echo "cells will stop all diego_cell consul_agent job processes, delete /var/vcap/store/consul_agent/* recursively, and restart them"
-                echo "ripley will nuke the site from orbit; aka stop, delete, restart all etcd and consul_agent processes
+                echo "ripley will nuke the site from orbit; aka stop, delete, restart all etcd and consul_agent processes"
                 exit 1
 fi
 

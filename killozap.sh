@@ -43,6 +43,29 @@ stopProcesses() {
   done
 }
 
+restartProcesses() {
+  for x in $jobVMs; do
+     jobId=$(echo $x | awk -F "/" '{ print $1 }')
+     instanceId=$(echo $x | awk -F "/" '{ print $2 }'| awk -F '(' '{ print $1 }')
+     if [ -z $instanceId ]; then
+       continue
+     fi
+     if [ "all" == $1 ]; then
+       echo Restarting all processes: $jobId Instance: $instanceId
+       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit restart all"
+       continue
+     fi
+     processId=$(echo $x | awk -F "," '{ print $2 }')
+     if [ -z $processId ]; then
+       continue
+     fi
+     if [ $processId = $1 ]; then
+       echo Restarting: $jobId Instance: $instanceId Process $processId
+       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit restart $processId"
+     fi
+  done
+}
+
 startProcesses() {
   for x in $jobVMs; do
      jobId=$(echo $x | awk -F "/" '{ print $1 }')
@@ -87,10 +110,7 @@ nukeProcesses() {
 
 if [ $1 == "brain-restart" ]; then
  jobVMs=$(bosh instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
- stopProcesses all 
- echo Waiting 60 seconds for processes to stop
- sleep 60
- startProcesses all
+ restartProcesses all 
 fi
 
 
@@ -156,9 +176,6 @@ if [ $1 == "ripley" ]; then
  nukeProcesses etcd
  startProcesses etcd
  jobVMs=$(bosh instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
- stopProcesses all
- echo Waiting 60 seconds for processes to stop
- sleep 60
- startProcesses all
+ restartProcesses all
 fi
 

@@ -7,7 +7,7 @@ if [[ ($1 == "consul-all") || ($1 == "consul-restart") || ($1 == "brain-restart"
         then
                 echo "Kill-o-Zapping your current CF deployment... "
         else
-                echo "Usage: $0 [consul-all | consul-restart | bbs | etcd | cells | ripley]"
+                echo "Usage: $0 [consul-all | consul-restart | brain-restart | bbs | etcd | cells | ripley]"
 		echo ""
                 echo "consul-all will stop all consul_agent processes globally, delete /var/vcap/store/consul_agent/* recursively, and restart them"
                 echo "consul-restart will restart all consul_agent processes globally"
@@ -143,6 +143,8 @@ if [ $1 == "etcd" ]; then
  jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep etcd_server)
  stopProcesses etcd
  nukeProcesses etcd
+ echo Waiting 30 seconds for processes to finish exiting
+ sleep 30
  startProcesses etcd
 fi
 
@@ -157,6 +159,8 @@ if [ $1 == "bbs" ]; then
  jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep diego_database)
  stopProcesses etcd
  nukeProcesses etcd
+ echo Waiting 30 seconds for processes to finish exiting
+ sleep 30
  startProcesses etcd
 fi
 
@@ -174,6 +178,8 @@ if [ $1 == "ripley" ]; then
  startProcesses consul_agent
  stopProcesses etcd
  nukeProcesses etcd
+ echo Waiting 30 seconds for processes to finish exiting
+ sleep 30
  startProcesses etcd
  jobVMs=$(bosh instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
  restartProcesses all

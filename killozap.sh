@@ -155,5 +155,10 @@ if [ $1 == "ripley" ]; then
  stopProcesses etcd
  nukeProcesses etcd
  startProcesses etcd
+ jobVMs=$(bosh instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
+ stopProcesses all
+ echo Waiting 60 seconds for processes to stop
+ sleep 60
+ startProcesses all
 fi
 

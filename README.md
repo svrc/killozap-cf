@@ -2,7 +2,8 @@ Destroys (with extreme prejudice) consul or etcd cluster persistent state for a 
 
 Assumes the PCF convention where 
 * etcd server jobs have the pattern "etcd_server" 
-* diego BBS have "diego_database" patterns, 
+* diego BBS have "diego_database" job name patterns, 
+* diego brain have "diego_brain" job patterns,
 * and cells have "diego_cell" job patterns.
 
 Also assumes that you can't predict which consul agent thinks its the leader, so it's best to nuke or restart them all.
@@ -23,6 +24,9 @@ Also assumes that you can't predict which consul agent thinks its the leader, so
 
 **consul-restart** argument will 
 * restart all consul_agent processes (across all jobs)
+
+**brain-restart** argument will 
+* restart all processes across all diego_brain jobs
 
 **cells** argument will
 * find all diego_cell jobs' consul_agent processes in a bosh deployment

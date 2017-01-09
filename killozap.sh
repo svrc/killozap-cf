@@ -3,7 +3,7 @@
 # Presumes PCF job name patterns
 # Useful for quorum loss
 
-if [[ ($1 == "consul-all") || ($1 == "consul-restart") || ($1 == "etcd" ) || ($1 == "bbs" ) || ($1 == "ripley") || ($1 == "cells") ]]
+if [[ ($1 == "consul-all") || ($1 == "consul-restart") || ($1 == "brain-restart") || ($1 == "etcd" ) || ($1 == "bbs" ) || ($1 == "ripley") || ($1 == "cells") ]]
         then
                 echo "Kill-o-Zapping your current CF deployment... "
         else
@@ -11,6 +11,7 @@ if [[ ($1 == "consul-all") || ($1 == "consul-restart") || ($1 == "etcd" ) || ($1
 		echo ""
                 echo "consul-all will stop all consul_agent processes globally, delete /var/vcap/store/consul_agent/* recursively, and restart them"
                 echo "consul-restart will restart all consul_agent processes globally"
+                echo "brain-restart will restart all diego brain processes, may be needed after a consul reset"
                 echo "bbs will stop all diego bbs etcd processes, delete /var/vcap/store/etcd/* recursively, and restart them"
                 echo "etcd will stop all non-diego-bbs etcd job processes, delete /var/vcap/store/etcd/* recursively, and restart them"
                 echo "cells will stop all diego_cell consul_agent job processes, delete /var/vcap/store/consul_agent/* recursively, and restart them"
@@ -26,12 +27,17 @@ stopProcesses() {
      if [ -z $instanceId ]; then
        continue
      fi
+     if [ $1 == "all" ]; then
+       echo Stopping all processes: $jobId Instance: $instanceId 
+       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit stop all"
+       continue
+     fi
      processId=$(echo $x | awk -F "," '{ print $2 }')
      if [ -z $processId ]; then
        continue
      fi
      if [ $processId = $1 ]; then
-       echo Restarting: $jobId Instance: $instanceId Process $processId
+       echo Stopping: $jobId Instance: $instanceId Process $processId
        bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit stop $processId"
      fi
   done
@@ -44,12 +50,17 @@ startProcesses() {
      if [ -z $instanceId ]; then
        continue
      fi
+     if [ "all" == $1 ]; then
+       echo Starting all processes: $jobId Instance: $instanceId
+       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit start all"
+       continue
+     fi
      processId=$(echo $x | awk -F "," '{ print $2 }')
      if [ -z $processId ]; then
        continue
      fi
      if [ $processId = $1 ]; then
-       echo Restarting: $jobId Instance: $instanceId Process $processId
+       echo Starting: $jobId Instance: $instanceId Process $processId
        bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit start $processId"
      fi
   done
@@ -73,6 +84,14 @@ nukeProcesses() {
      fi
   done
 }
+
+if [ $1 == "brain-restart" ]; then
+ jobVMs=$(bosh instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
+ stopProcesses all 
+ echo Waiting 60 seconds for processes to stop
+ sleep 60
+ startProcesses all
+fi
 
 
 if [ $1 == "consul-all" ]; then

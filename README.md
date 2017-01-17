@@ -1,6 +1,7 @@
 Destroys (with extreme prejudice) consul or etcd cluster persistent state for a given cf deployment for when those clusters have lost quorum.   
 
 Assumes the PCF convention where 
+* consul server jobs have the pattern "consul_server" 
 * etcd server jobs have the pattern "etcd_server" 
 * diego BBS have "diego_database" job name patterns, 
 * diego brain have "diego_brain" job patterns,
@@ -8,13 +9,19 @@ Assumes the PCF convention where
 
 Also assumes that you can't predict which consul agent thinks its the leader, so it's best to nuke or restart them all.
 
-**Usage:  killozap.sh [etcd|bbs|consul-all|consul-restart|cells|ripley]**
+**Usage:  killozap.sh [etcd|bbs|consul-all|consul-serversconsul-restart|brain-restart|cells|ripley]**
 
 **etcd** argument will 
 * find all etcd_server jobs' etcd processes in a bosh deployment 
 * monit stop etcd 
 * rm -rf /var/vcap/store/etcd 
 * restart all etcd servers.
+
+**consul-servers** argument will
+* find all consul_agent processes in a bosh deployment (across consul_server jobs only)
+* monit stop consul_agent
+* rm -rf /var/vcap/store/consul_agent
+* restart all consul_agent processes
 
 **consul-all** argument will 
 * find all consul_agent processes in a bosh deployment (across ALL jobs)

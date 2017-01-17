@@ -3,13 +3,14 @@
 # Presumes PCF job name patterns
 # Useful for quorum loss
 
-if [[ ($1 == "consul-all") || ($1 == "consul-restart") || ($1 == "brain-restart") || ($1 == "etcd" ) || ($1 == "bbs" ) || ($1 == "ripley") || ($1 == "cells") ]]
+if [[ ($1 == "consul-all") || ($1 == "consul-servers") || ($1 == "consul-restart") || ($1 == "brain-restart") || ($1 == "etcd" ) || ($1 == "bbs" ) || ($1 == "ripley") || ($1 == "cells") ]]
         then
                 echo "Kill-o-Zapping your current CF deployment... "
         else
                 echo "Usage: $0 [consul-all | consul-restart | brain-restart | bbs | etcd | cells | ripley]"
 		echo ""
                 echo "consul-all will stop all consul_agent processes globally, delete /var/vcap/store/consul_agent/* recursively, and restart them"
+                echo "consul-servers will stop all consul_server consul_agent processes, delete /var/vcap/store/consul_agent/* recursively, and restart them"
                 echo "consul-restart will restart all consul_agent processes globally"
                 echo "brain-restart will restart all diego brain processes, may be needed after a consul reset"
                 echo "bbs will stop all diego bbs etcd processes, delete /var/vcap/store/etcd/* recursively, and restart them"
@@ -124,6 +125,15 @@ if [ $1 == "consul-all" ]; then
  jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
  startProcesses consul_agent
  jobVMs=$allJobVMs
+ startProcesses consul_agent
+fi
+
+if [ $1 == "consul-servers" ]; then
+ jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
+ stopProcesses consul_agent
+ nukeProcesses consul_agent
+ echo Waiting 30 seconds for processes to finish exiting
+ sleep 30
  startProcesses consul_agent
 fi
 

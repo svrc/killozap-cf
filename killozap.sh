@@ -3,6 +3,18 @@
 # Presumes PCF job name patterns
 # Useful for quorum loss
 
+if [ -f /home/tempest-web/tempest/web/vendor/bosh/Gemfile ];
+then
+  export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/vendor/bosh/Gemfile
+  export COMMAND="bundle exec bosh"
+elif  [ -d /home/tempest-web ]; 
+then
+  export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile
+  export COMMAND="bundle exec bosh"
+else 
+  export COMMAND="bosh"
+fi
+
 if [[ ($1 == "consul-all") || ($1 == "consul-servers") || ($1 == "consul-restart") || ($1 == "brain-restart") || ($1 == "etcd" ) || ($1 == "bbs" ) || ($1 == "ripley") || ($1 == "cells") ]]
         then
                 echo "Kill-o-Zapping your current CF deployment... "
@@ -30,7 +42,7 @@ stopProcesses() {
      fi
      if [ $1 == "all" ]; then
        echo Stopping all processes: $jobId Instance: $instanceId 
-       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit stop all"
+       $COMMAND ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit stop all"
        continue
      fi
      processId=$(echo $x | awk -F "," '{ print $2 }')
@@ -39,7 +51,7 @@ stopProcesses() {
      fi
      if [ $processId = $1 ]; then
        echo Stopping: $jobId Instance: $instanceId Process $processId
-       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit stop $processId"
+       $COMMAND ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit stop $processId"
      fi
   done
 }
@@ -53,7 +65,7 @@ restartProcesses() {
      fi
      if [ "all" == $1 ]; then
        echo Restarting all processes: $jobId Instance: $instanceId
-       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit restart all"
+       $COMMAND ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit restart all"
        continue
      fi
      processId=$(echo $x | awk -F "," '{ print $2 }')
@@ -62,7 +74,7 @@ restartProcesses() {
      fi
      if [ $processId = $1 ]; then
        echo Restarting: $jobId Instance: $instanceId Process $processId
-       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit restart $processId"
+       $COMMAND ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit restart $processId"
      fi
   done
 }
@@ -76,7 +88,7 @@ startProcesses() {
      fi
      if [ "all" == $1 ]; then
        echo Starting all processes: $jobId Instance: $instanceId
-       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit start all"
+       $COMMAND ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit start all"
        continue
      fi
      processId=$(echo $x | awk -F "," '{ print $2 }')
@@ -85,7 +97,7 @@ startProcesses() {
      fi
      if [ $processId = $1 ]; then
        echo Starting: $jobId Instance: $instanceId Process $processId
-       bosh ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit start $processId"
+       $COMMAND ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit start $processId"
      fi
   done
 }
@@ -104,32 +116,32 @@ nukeProcesses() {
      fi
      if [ $processId = $1 ]; then
        echo Deleting: $jobId Instance: $instanceId Directory /var/vcap/store/$processId
-       bosh ssh $jobId $instanceId "sudo -s rm -rf /var/vcap/store/$processId/*"
+       $COMMAND ssh $jobId $instanceId "sudo -s rm -rf /var/vcap/store/$processId/*"
      fi
   done
 }
 
 if [ $1 == "brain-restart" ]; then
- jobVMs=$(bosh instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
+ jobVMs=$($COMMAND instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
  restartProcesses all 
 fi
 
 
 if [ $1 == "consul-all" ]; then
- allJobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
+ allJobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
  jobVMs=$allJobVMs
  stopProcesses consul_agent
  nukeProcesses consul_agent
 
  # Start the consul server cluster first.
- jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
  startProcesses consul_agent
  jobVMs=$allJobVMs
  startProcesses consul_agent
 fi
 
 if [ $1 == "consul-servers" ]; then
- jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
  stopProcesses consul_agent
  nukeProcesses consul_agent
  echo Waiting 30 seconds for processes to finish exiting
@@ -138,19 +150,19 @@ if [ $1 == "consul-servers" ]; then
 fi
 
 if [ $1 == "consul-restart" ]; then
- allJobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
+ allJobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
  jobVMs=$allJobVMs
  stopProcesses consul_agent
 
  # Start the consul server cluster first.
- jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
  startProcesses consul_agent
  jobVMs=$allJobVMs
  startProcesses consul_agent
 fi
 
 if [ $1 == "etcd" ]; then
- jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep etcd_server)
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep etcd_server)
  stopProcesses etcd
  nukeProcesses etcd
  echo Waiting 30 seconds for processes to finish exiting
@@ -159,14 +171,14 @@ if [ $1 == "etcd" ]; then
 fi
 
 if [ $1 == "cells" ]; then
- jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep diego_cell)
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep diego_cell)
  stopProcesses consul_agent
  nukeProcesses consul_agent
  startProcesses consul_agent
 fi
 
 if [ $1 == "bbs" ]; then
- jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep diego_database)
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep diego_database)
  stopProcesses etcd
  nukeProcesses etcd
  echo Waiting 30 seconds for processes to finish exiting
@@ -175,14 +187,14 @@ if [ $1 == "bbs" ]; then
 fi
 
 if [ $1 == "ripley" ]; then
- jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
- allJobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
+ allJobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }')
  jobVMs=$allJobVMs
  stopProcesses consul_agent
  nukeProcesses consul_agent
 
  # Start the consul server cluster first.
- jobVMs=$(bosh instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }' | grep consul_server)
  startProcesses consul_agent
  jobVMs=$allJobVMs
  startProcesses consul_agent
@@ -191,7 +203,7 @@ if [ $1 == "ripley" ]; then
  echo Waiting 30 seconds for processes to finish exiting
  sleep 30
  startProcesses etcd
- jobVMs=$(bosh instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
+ jobVMs=$($COMMAND instances |  awk -F '|' '{ print $2 }' | grep diego_brain)
  restartProcesses all
 fi
 

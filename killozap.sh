@@ -165,8 +165,14 @@ if [ $1 == "etcd" ]; then
  jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep etcd_server)
  stopProcesses etcd
  nukeProcesses etcd
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep etcd_tls_server)
+ stopProcesses etcd
+ nukeProcesses etcd
  echo Waiting 30 seconds for processes to finish exiting
  sleep 30
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep etcd_server)
+ startProcesses etcd
+ jobVMs=$($COMMAND instances --ps | awk -F "|" 'RS="\\+\\-\\-" {gsub(/ /, "", $0); for (i=2; i<= NF; i+=6) printf "%s\n", (i>2) ? $2 "," $i : "" }'| grep etcd_tls_server)
  startProcesses etcd
 fi
 

@@ -98,6 +98,8 @@ startProcesses() {
      if [ $processId = $1 ]; then
        echo Starting: $jobId Instance: $instanceId Process $processId
        $COMMAND ssh $jobId $instanceId "sudo -s /var/vcap/bosh/bin/monit start $processId"
+       echo Sleeping 30 seconds to wait for process to come up
+       sleep 30
      fi
   done
 }

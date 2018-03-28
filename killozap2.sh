@@ -204,7 +204,7 @@ if [ $1 == "ripley" ]; then
  echo Waiting 30 seconds for processes to finish exiting
  sleep 30
  startProcesses etcd
- jobVMs=$($COMMAND instances --json | jq -r '.Tables[0].Rows[] | select(.process != "") | [ .instance, .process ] | @csv' | sed 's/"//g' | grep diego_brain)
+ jobVMs=$($COMMAND instances -p --json | jq -r '.Tables[0].Rows[] | select(.process != "") | [ .instance, .process ] | @csv' | sed 's/"//g' | grep diego_brain)
  restartProcesses all
 fi
 

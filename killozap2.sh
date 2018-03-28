@@ -12,7 +12,7 @@ if [[ ($1 == "consul-all") || ($1 == "consul-servers") || ($1 == "consul-restart
         else
                 echo "Usage: $0 [consul-all | consul-restart | brain-restart | bbs | etcd | cells | ripley]"
 		echo ""
-		echo "Make sure your BOSH environment variables are all set!"
+		echo "Make sure your BOSH environment variables are all set!  BOSH_DEPLOYMENT , BOSH_ENVIRONMENT, BOSH_CA_CERT at minimum"
 		echo ""
                 echo "consul-all will stop all consul_agent processes globally, delete /var/vcap/store/consul_agent/* recursively, and restart them"
                 echo "consul-servers will stop all consul_server consul_agent processes, delete /var/vcap/store/consul_agent/* recursively, and restart them"
